@@ -881,7 +881,8 @@ run_monit() {
   fi
 
 
-  wait #for the bg processes
+  # wait #for the bg processes
+  sleep 5
 
   # BWM not used any more
   #$DSH_C "$bwm -o csv -I bond0,eth0,eth1,eth2,eth3,ib0,ib1 -u bytes -t 1000 >> $HDD/bwm-\$(hostname).log &"
@@ -905,7 +906,8 @@ stop_monit(){
     fi
   fi
 
-  wait #for the bg processes
+  # wait #for the bg processes
+  sleep 5
 }
 
 # Return the bench name with the run number on the name
