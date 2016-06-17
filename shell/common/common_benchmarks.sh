@@ -260,7 +260,7 @@ get_specified_disks() {
   local disk="$1"
   local dir
 
-  if [ "$disk" == "SSD" ] || [ "$disk" == "HDD" ] || [ "$disk" == "RAM" ] || [ "$disk" == "NFS" ]; then
+  if [ "$disk" == "SSD" ] || [ "$disk" == "HDD" ] || [ "$disk" == "RAM" ]; then
     dir="${BENCH_DISKS["$disk"]}"
   elif [[ "$disk" =~ .+[1-9] ]] ; then #if last char is a number
     local disks="${1:(-1)}"
@@ -281,7 +281,7 @@ get_specified_disks() {
 get_tmp_disk() {
   local dir
 
-  if [ "$1" == "SSD" ] || [ "$1" == "HDD" ] || [ "$1" == "RAM" ]  || [ "$1" == "NFS" ]; then
+  if [ "$1" == "SSD" ] || [ "$1" == "HDD" ] || [ "$1" == "RAM" ] ; then
     dir="${BENCH_DISKS["$DISK"]}"
   elif [[ "$1" =~ .+[1-9] ]] ; then #if last char is a number
     local disks="${1:(-1)}"
@@ -295,8 +295,6 @@ get_tmp_disk() {
       dir="${BENCH_DISKS["TMP"]}"
     elif [ "$disks_type" == "SR" ] ; then
       dir="${BENCH_DISKS["TMP_RAM"]}"
-    elif [ "$disks_type" == "NFS" ] ; then # on NFS use local as /tmp
-      dir="${BENCH_DISKS["HDD"]}"
     else
       dir="${BENCH_DISKS["${disks_type}1"]}"
     fi
@@ -324,10 +322,10 @@ $(get_tmp_disk "$disk_name")"
   echo -e "$all_disks"
 }
 
-# Retuns the main benchmkark path (useful for multidisk setups)
+# Retuns the main benchmkar path (useful for multidisk setups)
 # $1 disk type
 get_initial_disk() {
-  if [ "$1" == "SSD" ] || [ "$1" == "HDD" ] || [ "$1" == "RAM" ] || [ "$1" == "NFS" ] ; then
+  if [ "$1" == "SSD" ] || [ "$1" == "HDD" ] || [ "$1" == "RAM" ] ; then
     local dir="${BENCH_DISKS["$DISK"]}"
   elif [[ "$1" =~ .+[1-9] ]] ; then #if last char is a number
     local disks="${1:(-1)}"
@@ -780,7 +778,7 @@ set_monit_binaries() {
         logger "INFO: Setting up perfomance monitor: $perf_mon"
         perf_mon_bin_path="$($DSH_MASTER "which '$perf_mon'")"
         if [ "$perf_mon_bin_path" ] ; then
-          logger "INFO: Copying $perf_mon binary from: $perf_mon_bin_path to $perf_mon_bench_path"
+          logger "INFO: Copying $perf_mon binary to $perf_mon_bench_path"
           $DSH "mkdir -p '$perf_mon_bench_path'; cp '$perf_mon_bin_path' '$perf_mon_bench_path/${perf_mon}_$PORT_PREFIX'"
         else
           die "Cannot find $perf_mon binary on the system"
@@ -826,50 +824,10 @@ run_monit() {
 
   if [ "$perf_mon" == "sar" ] ; then
     if [ "$clusterType" != "PaaS" ]; then
-      $DSH "$perf_mon_bench_path/${perf_mon}_$PORT_PREFIX -o $HDD/sar-\$(hostname).sar $BENCH_PERF_INTERVAL >/dev/null  &" & #2>&1
+      $DSH "$perf_mon_bench_path/${perf_mon}_$PORT_PREFIX -o $HDD/sar-\$(hostname).sar $BENCH_PERF_INTERVAL >/dev/null 2>&1 &" &
     else
       $DSH "sar -o $HDD/sar-\$(hostname).sar $BENCH_PERF_INTERVAL >/dev/null 2>&1 &" &
     fi
-  elif [ "$perf_mon" == "vmstat" ] ; then
-    if [ "$clusterType" != "PaaS" ]; then
-      $DSH "$perf_mon_bench_path/${perf_mon}_$PORT_PREFIX -n $BENCH_PERF_INTERVAL >> $HDD/vmstat-\$(hostname).log &" &
-    else
-      $DSH "vmstat -n $BENCH_PERF_INTERVAL >> $HDD/vmstat-\$(hostname).log &" &
-    fi
-  # iotop, requires sudo and interval only 1 sec supported
-  elif [ "$perf_mon" == "iotop" ] ; then
-    if [ -z "$noSudo" ] || [ "$BENCH_PERF_INTERVAL" == "1" ]; then
-      if [ "$clusterType" != "PaaS" ]; then
-        local iotop_log="$HDD/iotop-\$(hostname).log"
-        $DSH "touch $iotop_log; sudo $perf_mon_bench_path/${perf_mon}_$PORT_PREFIX -btoqqk >> $iotop_log &" &
-      else
-        $DSH "touch $iotop_log; sudo iotop  >> $iotop_log &" &
-      fi
-    else
-      logger "WARNING: iotop requires root and sudo is disabled for cluster OR BENCH_PERF_INTERVAL != 1 (set to: $BENCH_PERF_INTERVAL), skipping..."
-    fi
-  # dstat
-  elif [ "$perf_mon" == "dstat" ] ; then
-     # Removed for ubuntu
-     # -T --cpu-adv --top-cpu-adv -l -d --aio --disk-avgqu --disk-avgrq --disk-svctm --disk-tps --disk-util --disk-wait --top-bio-adv --top-io-adv --md-status -n --net-packets  -gimprsy --cpu-use --fs --top-int --top-latency -ipc -lock --mem-adv --top-mem --raw --unix --vm-adv --bits --nocolor --noheader --profile --power --proc-count --thermal --noheaders
-     #--cpu-adv --disk-avgqu --disk-avgrq --disk-svctm --disk-wait --md-status  --cpu-use --mem-adv --vm-adv --bits --thermal
-
-    if [ "$clusterType" != "PaaS" ]; then
-      local dstat_log="$HDD/dstat-\$(hostname).log"
-      $DSH "$perf_mon_bench_path/${perf_mon}_$PORT_PREFIX -T --cpu --top-cpu-adv -l -d --aio --disk-tps --disk-util --top-bio-adv --top-io-adv -n --net-packets  -gimprsy --fs --top-int --top-latency -ipc -lock --top-mem --raw --unix --nocolor --noheader --profile --power --proc-count --noheaders  $BENCH_PERF_INTERVAL >> $dstat_log &" &
-    else
-      $DSH "dstat -T --cpu --top-cpu-adv -l -d --aio --disk-tps --disk-util --top-bio-adv --top-io-adv -n --net-packets  -gimprsy --fs --top-int --top-latency -ipc -lock --top-mem --raw --unix --nocolor --noheader --profile --power --proc-count --noheaders  $BENCH_PERF_INTERVAL >> $dstat_log &" &
-    fi
-  # perf
-  elif [ "$perf_mon" == "perf" ] ; then
-
-    # Enable CPU trace data (if we have root)
-    if [ -z "$noSudo" ] ; then
-      $DSH "sudo echo '0' > /proc/sys/kernel/perf_event_paranoid"
-    fi
-
-    # TODO: https://github.com/intel-hadoop/PAT/blob/master/PAT/WORKER_scripts/instruments/perf
-
   elif [ "$perf_mon" == "vmstat" ] ; then
     if [ "$clusterType" != "PaaS" ]; then
       $DSH "$perf_mon_bench_path/${perf_mon}_$PORT_PREFIX -n $BENCH_PERF_INTERVAL >> $HDD/vmstat-\$(hostname).log &" &
@@ -880,8 +838,8 @@ run_monit() {
     die "Specified perf mon $perf_mon not implemented"
   fi
 
-
-  wait #for the bg processes
+  #wait $(ps aux | grep -E '([v]mstat|[s]ar)' | awk '{print $2}')
+  sleep 5 #for the bg processes
 
   # BWM not used any more
   #$DSH_C "$bwm -o csv -I bond0,eth0,eth1,eth2,eth3,ib0,ib1 -u bytes -t 1000 >> $HDD/bwm-\$(hostname).log &"
@@ -905,7 +863,9 @@ stop_monit(){
     fi
   fi
 
-  wait #for the bg processes
+  # more one command to look for: $(ps aux | grep -E '([s]leep|[g]nome-terminal)' | awk '{print $2}')  
+  #wait $(ps aux | grep '[k]illall' | awk '{print $2}')
+  sleep 5 #for the bg processes
 }
 
 # Return the bench name with the run number on the name
@@ -1183,6 +1143,55 @@ execute_cmd(){
 
   # Run the command and time it
   time_cmd "$cmd" "$time_exec"
+
+  # Stop metrics monitors and save bench (if needed)
+  if [ "$time_exec" ] ; then
+    set_bench_end "$bench"
+    stop_monit
+    save_disk_usage "AFTER"
+    save_bench "$bench"
+  fi
+}
+
+save_disk_usage() {
+  echo "# Checking disk space with df $1" >> $JOB_PATH/disk.log
+  $DSH "df -h" 2>&1 >> $JOB_PATH/disk.log
+  echo "# Checking hadoop folder space $1" >> $JOB_PATH/disk.log
+  $DSH "du -sh $HDD/* 2> /dev/null"  >> $JOB_PATH/disk.log
+}
+
+check_bench_list() {
+  if [ ! "$BENCH_LIST" ] ; then
+    BENCH_LIST="$BENCH_ENABLED"
+  else
+    for bench_tmp in $BENCH_LIST ; do
+      if ! inList "$BENCH_ENABLED" "$bench_tmp" ; then
+        die "Benchmark $bench_tmp not enabled in BENCH_ENABLED. Enabled: $BENCH_ENABLED"
+      fi
+    done
+  fi
+}
+
+# Performs the actual benchmark execution on master created by Timo & Max
+# $1 benchmark name
+# $2 command
+# $3 if to time exec
+execute_cmd_master(){
+  local bench="$1"
+  local cmd="$2"
+  local time_exec="$3"
+
+  # Start metrics monitor (if needed)
+  if [ "$time_exec" ] ; then
+    save_disk_usage "BEFORE"
+    restart_monit
+    set_bench_start "$bench"
+  fi
+
+  logger "DEBUG: command:\n$cmd"
+
+  # Run the command and time it
+  time_cmd_master "$cmd" "$time_exec"
 
   # Stop metrics monitors and save bench (if needed)
   if [ "$time_exec" ] ; then
