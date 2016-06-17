@@ -1165,6 +1165,36 @@ time_cmd() {
   fi
 }
 
+# Performs the actual benchmark execution on master created by Timo & Max
+# $1 benchmark name
+# $2 command
+# $3 if to time exec
+execute_cmd_master(){
+  local bench="$1"
+  local cmd="$2"
+  local time_exec="$3"
+
+  # Start metrics monitor (if needed)
+  if [ "$time_exec" ] ; then
+    save_disk_usage "BEFORE"
+    restart_monit
+    set_bench_start "$bench"
+  fi
+
+  logger "DEBUG: command:\n$cmd"
+
+  # Run the command and time it
+  time_cmd_master "$cmd" "$time_exec"
+
+  # Stop metrics monitors and save bench (if needed)
+  if [ "$time_exec" ] ; then
+    set_bench_end "$bench"
+    stop_monit
+    save_disk_usage "AFTER"
+    save_bench "$bench"
+  fi
+}
+
 # Performs the actual benchmark execution
 # $1 benchmark name
 # $2 command
