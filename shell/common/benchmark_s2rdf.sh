@@ -1,6 +1,7 @@
 # Scale factor
-bsbm_products=bsbmrestest
+bsbm_products=triples
 scale_ub=1
+exec_engine=spark
 
 source_file "$ALOJA_REPO_PATH/shell/common/common_s2rdf.sh"
 
@@ -27,6 +28,8 @@ else
 	BENCH_REQUIRED_FILES["S2RDF"]="http://szene-limburg.de/s2rdf/s2rdf_DataGenerator.tar.gz"
   generate_data=1
 fi
+
+BENCH_REQUIRED_FILES["JDBC4RDF"]="http://szene-limburg.de/s2rdf/jdbc4rdf.tar.gz"
 
 
 # Iterate the specified benchmarks in the suite
@@ -57,7 +60,7 @@ benchmark_suite_run() {
 benchmark_prepare_bsbm() {
   #cp /vagrant/hive-site.xml /scratch/local/aloja-bench_3/hive_conf/
   #mkdir /vagrant/test
-  local bench_name="${FUNCNAME[0]##*benchmark_}"
+  local bench_name="${FUNCNAME[0]##*benchmark_}_$exec_engine$bsbm_products"
   logger "INFO: Preparing $bench_name"
 
 	if [ $generate_data ]; then
@@ -80,16 +83,21 @@ benchmark_prepare_bsbm() {
 
 	logger "INFO: Starting HiveServer2"
 
-	# For Spark
-	#execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/$SPARK_VERSION/sbin; $(get_spark_exports) ./start-thriftserver.sh &"
-	
-	# For Hive
-  #execute_cmd_master "$bench_name" "$(get_hive_exports) $HIVE_HOME/bin/hive --service hiveserver2 &&"
-	local hive_exports="$(get_hive_exports)"
-	local hive_bin="$HIVE_HOME/bin/hive"
-  local hive_cmd="$hive_exports
-$hive_bin --service hiveserver2 &"
-	eval $hive_cmd
+
+	if [ $exec_engine == "spark" ]; then
+		# For Spark
+		logger "INFO: Executing with spark"		
+		execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/$SPARK_VERSION/sbin; $(get_spark_exports) ./start-thriftserver.sh &"
+	else
+		# For Hive
+		#execute_cmd_master "$bench_name" "$(get_hive_exports) $HIVE_HOME/bin/hive --service hiveserver2 &&"
+		logger "INFO: Executing with hive"
+		local hive_exports="$(get_hive_exports)"
+		local hive_bin="$HIVE_HOME/bin/hive"
+		local hive_cmd="$hive_exports
+	$hive_bin --service hiveserver2 &"
+		eval $hive_cmd
+	fi
 
 	logger "INFO: Wait 30 seconds to get server started..."
 	sleep 30
@@ -111,12 +119,12 @@ benchmark_suite_config() {
 benchmark_bsbm() {
   logger "INFO: Running $BENCH_SUITE"
   
-  chmod +rwx $(get_local_apps_path)/s2rdf/jdbc4rdf_0.4.jar
-  local bench_name="${FUNCNAME[0]##*benchmark_}"
+  chmod +rwx $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar
+  local bench_name="${FUNCNAME[0]##*benchmark_}_$exec_engine$bsbm_products"
 
   # default hive credentials: user=vagrant, password= 
 	# For using spark db.driver=spark has to be changed!
-  execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf_vagrant.properties executor.queryfile=$(get_local_apps_path)/s2rdf/queries.txt" "time"
+  execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_vagrant.properties executor.queryfile=$(get_local_apps_path)/s2rdf/queries.txt db.driver=$exec_engine" "time"
 
 
   logger "INFO: DONE executing $BENCH_SUITE"
