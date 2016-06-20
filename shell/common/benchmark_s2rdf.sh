@@ -1,7 +1,38 @@
+
+
+# Known issues and how to solve them
+
+# The following errors might occur depending on how the script is used
+
+# PROBLEM: Executor: JDBC / Thrift server connection refused
+# SOLUTION: Increase sleep (waiting for hive server to start) to a bigger value (i.e. 120)
+ 
+# PROBLEM: Translator: Can't find table inside statistics file
+# SOLUTION: Increase scale factor to at least 5 products, or use a predefined test (triples, bsbmrestest, 1000)
+
+# The following problem solutions are already implemented.
+
+# PROBLEM: OutOfMemory: PermGen
+# SOLUTION1: Increase '-XX:MaxPermSize=128m' memory in HADOOP_OPTS variable of hadoop_env.sh
+# SOLUTION2: Upgrade to Java 8+
+
+# PROBLEM: Executor: Can't find table
+# SOLUTION: Make sure the metastore of the hive cli and the thrift server are in the same directory (Defining a metastore in config/bench/config_files/hive1_conf_template/hive-site.xml should fix the problem)
+
+# PROBLEM: run_monit and restart_monit don't terminate (common_benchmark)
+# SOLUTION: Replace wait with sleep 5
+
+# PROBLEM: Hadoop commands can't be used in DatasetCreator Spark jar file
+# SOLUTION: Add hadoop path in common_spark
+
+# Known Issues - end
+
+
+
 # Scale factor
-bsbm_products=triples
+bsbm_products=bsbmrestest
 scale_ub=1
-exec_engine=spark
+exec_engine=hive
 
 source_file "$ALOJA_REPO_PATH/shell/common/common_s2rdf.sh"
 
