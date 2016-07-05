@@ -13,19 +13,19 @@ generate_bsbm() {
 
 	# Create VP tables
   logger "INFO: Running VP"
-  execute_spark "$bench_name" "spark-submit --class runDriver --master local $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv VP $scale_ub"
+  execute_spark "$bench_name" "spark-submit --class runDriver --master local[*] --driver-memory $driver_memory $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv VP $scale_ub"
 
 	# Create SO tables
   logger "INFO: Running SO"
-  execute_spark "$bench_name" "spark-submit --class runDriver --master local $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv SO $scale_ub"
+  execute_spark "$bench_name" "spark-submit --class runDriver --master local[*] --driver-memory $driver_memory $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv SO $scale_ub"
 
 	# Create OS tables
   logger "INFO: Running OS"
-  execute_spark "$bench_name" "spark-submit --class runDriver --master local $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv OS $scale_ub"
+  execute_spark "$bench_name" "spark-submit --class runDriver --master local[*] --driver-memory $driver_memory $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv OS $scale_ub"
 
 	# Create SS tables
   logger "INFO: Running SS"
-  execute_spark "$bench_name" "spark-submit --class runDriver --master local $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv SS $scale_ub"
+  execute_spark "$bench_name" "spark-submit --class runDriver --master local[*] --driver-memory $driver_memory $(get_local_apps_path)/s2rdf/datasetcreator_2.10-1.2.jar /tmp/hive/s2rdf/ data.tsv SS $scale_ub"
 
 
 	# create references to hive metastore

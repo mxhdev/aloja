@@ -30,9 +30,12 @@
 
 
 # Scale factor
-bsbm_products=bsbmrestest
+bsbm_products=10000
 scale_ub=1
 exec_engine=hive
+
+# Is used only for the DataSetCreator 
+driver_memory=4g
 
 source_file "$ALOJA_REPO_PATH/shell/common/common_s2rdf.sh"
 
@@ -47,6 +50,9 @@ source_file "$ALOJA_REPO_PATH/shell/common/common_spark.sh"
 set_spark_requires
 
 [ ! "$BENCH_LIST" ] && BENCH_LIST="bsbm"
+
+# Delete all files from previous executions
+rm -R $(get_local_apps_path)/s2rdf
 
 # load data and queries
 if [ $bsbm_products == "bsbmrestest" ]; then
@@ -104,8 +110,8 @@ benchmark_prepare_bsbm() {
 	fi
 
 	# Copy hive-site.xml to hive and spark conf folder (for hive cli and hive/spark thrift server use same metastore)
-  cp /vagrant/config/bench/config_files/hive1_conf_template/hive-site.xml $(get_local_apps_path)/apache-hive-1.2.1-bin/conf/
-	cp /vagrant/config/bench/config_files/hive1_conf_template/hive-site.xml $(get_local_apps_path)/spark-1.6.1-bin-hadoop2.6/conf/
+  cp $(get_base_configs_path)/hive1_conf_template/hive-site.xml $(get_local_apps_path)/apache-hive-1.2.1-bin/conf/
+	cp $(get_base_configs_path)/hive1_conf_template/hive-site.xml $(get_local_apps_path)/spark-1.6.1-bin-hadoop2.6/conf/
 
   # run hive import script
   execute_hive "$bench_name" "-hiveconf prepath='/tmp/hive/s2rdf' -f $(get_local_apps_path)/s2rdf/loadScript.hql" "time"
@@ -153,9 +159,9 @@ benchmark_bsbm() {
   chmod +rwx $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar
   local bench_name="${FUNCNAME[0]##*benchmark_}_$exec_engine$bsbm_products"
 
-  # default hive credentials: user=vagrant, password= 
+  # default hive credentials: user=s2rdf, password= 
 	# For using spark db.driver=spark has to be changed!
-  execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_vagrant.properties executor.queryfile=$(get_local_apps_path)/s2rdf/queries.txt db.driver=$exec_engine" "time"
+  execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_vagrant.properties executor.queryfile=$(get_local_apps_path)/s2rdf/queries.txt db.driver=$exec_engine db.auth.user=s2rdf" "time"
 
 
   logger "INFO: DONE executing $BENCH_SUITE"
