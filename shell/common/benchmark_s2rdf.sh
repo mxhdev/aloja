@@ -114,7 +114,7 @@ benchmark_prepare_bsbm() {
 	cp $(get_base_configs_path)/hive1_conf_template/hive-site.xml $(get_local_apps_path)/spark-1.6.1-bin-hadoop2.6/conf/
 
   # run hive import script
-  execute_hive "$bench_name" "-hiveconf prepath='/tmp/hive/s2rdf' -f $(get_local_apps_path)/s2rdf/loadScript.hql" "time"
+  execute_hive "$bench_name" "-hiveconf prepath='' -f $(get_local_apps_path)/s2rdf/loadScript.hql" "time"
 
   # execute_hive "$bench_name" '-f /scratch/local/aplic2/apps/test.hql' "time"  
 
