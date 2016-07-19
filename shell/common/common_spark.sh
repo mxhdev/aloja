@@ -27,6 +27,7 @@ export SPARK_HOME='$(get_local_apps_path)/${SPARK_VERSION}';
 export SPARK_CONF_DIR=$(get_local_apps_path)/${SPARK_VERSION}/conf;
 export SPARK_LOG_DIR=$(get_local_bench_path)/spark_logs;
 export SPARK_CLASSPATH=\$($(get_local_apps_path)/${HADOOP_VERSION}/bin/hadoop classpath);
+export PATH=$PATH:$(get_local_apps_path)/${HADOOP_VERSION}/bin;
 "
 
     echo -e "$to_export\n"
