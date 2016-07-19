@@ -934,8 +934,7 @@ done
   fi
 
 
-  # wait #for the bg processes
-  sleep 5
+  wait #for the bg processes
 
   # BWM not used any more
   #$DSH_C "$bwm -o csv -I bond0,eth0,eth1,eth2,eth3,ib0,ib1 -u bytes -t 1000 >> $HDD/bwm-\$(hostname).log &"
@@ -968,8 +967,7 @@ stop_monit(){
     fi
   fi
 
-  # wait #for the bg processes
-  sleep 5
+  wait #for the bg processes
 }
 
 # Return the bench name with the run number on the name
@@ -1324,38 +1322,6 @@ execute_cmd(){
     save_bench "$bench"
   fi
 }
-
-
-# Performs the actual benchmark execution on master created by Timo & Max
-# $1 benchmark name
-# $2 command
-# $3 if to time exec
-execute_cmd_master(){
-  local bench="$1"
-  local cmd="$2"
-  local time_exec="$3"
-
-  # Start metrics monitor (if needed)
-  if [ "$time_exec" ] ; then
-    save_disk_usage "BEFORE"
-    restart_monit
-    set_bench_start "$bench"
-  fi
-
-  logger "DEBUG: command:\n$cmd"
-
-  # Run the command and time it
-  time_cmd_master "$cmd" "$time_exec"
-
-  # Stop metrics monitors and save bench (if needed)
-  if [ "$time_exec" ] ; then
-    set_bench_end "$bench"
-    stop_monit
-    save_disk_usage "AFTER"
-    save_bench "$bench"
-  fi
-}
-
 
 save_disk_usage() {
   echo "# Checking disk space with df $1" >> $JOB_PATH/disk.log
