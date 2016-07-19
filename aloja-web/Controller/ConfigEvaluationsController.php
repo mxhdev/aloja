@@ -5,6 +5,7 @@ namespace alojaweb\Controller;
 use alojaweb\inc\HighCharts;
 use alojaweb\inc\Utils;
 use alojaweb\inc\DBUtils;
+use Monolog\Handler\Curl\Util;
 
 class ConfigEvaluationsController extends AbstractController
 {
@@ -239,6 +240,8 @@ class ConfigEvaluationsController extends AbstractController
 
 			$rows_config = $db->get_rows($query);
 
+			usort($rows_config, array('alojaweb\inc\Utils', 'cmp_conf'));
+
 			$height = 600;
 			if (count($rows_config) > 4) {
 				$num_configs = count($rows_config);
@@ -284,6 +287,8 @@ class ConfigEvaluationsController extends AbstractController
 				$this->container->getTwig ()->addGlobal ( 'message', "Warning: No data selected (Predictions|Observations) from the ML Filters. Adding the Observed executions to the figure by default.\n" );
 
 			$rows = $db->get_rows($query);
+
+			usort($rows, array('alojaweb\inc\Utils', 'cmp_conf'));
 
 			if (!$rows)
 				throw new \Exception("No results for query!");
