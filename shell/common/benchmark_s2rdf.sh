@@ -191,10 +191,15 @@ benchmark_suite_save() {
 }
 
 benchmark_suite_cleanup() {
-  # kill hiveserver2 since there is no command to stop it...
-  kill -9 $(ps aux | grep '[j]ava' | awk '{print $2}')
   
+  logger "INFO: Cleaning Hadoop"
   clean_hadoop
+
+  logger "INFO: Sstopping HiveServer2"
+# kill hiveserver2 since there is no command to stop it...
+  kill -9 $(ps aux | grep '[S]erver2' | awk '{print $2}')
+  
+  
 }
 
 
