@@ -37,17 +37,22 @@
 
 
 # Scale factor
-bsbm_products=50000
+bsbm_products=5
 scale_ub=1
-exec_engine=hive
+exec_engine=spark
 
 
 # Spark parameters (used for DataSetCreator or query execution if exec_engine=spark)
 driver_memory=8g
-spark_master=local[*]
+spark_master=yarn
 
 source_file "$ALOJA_REPO_PATH/shell/common/common_s2rdf.sh"
 
+if [ $spark_master == "yarn" ]; then
+	spark_master="yarn --driver-memory $driver_memory --executor-cores 3 --num-executors 4 --executor-memory 23G"
+else 
+  spark_master="local[*] --driver-memory $driver_memory"
+fi
 
 # import hive
 # hive version is defined in conf/benchmarks_defaults.conf
@@ -61,7 +66,7 @@ set_spark_requires
 [ ! "$BENCH_LIST" ] && BENCH_LIST="bsbm"
 
 # Delete all files from previous executions
-rm -R $(get_local_apps_path)/s2rdf
+rm -rf $(get_local_apps_path)/s2rdf
 
 # load data and queries
 if [ $bsbm_products == "bsbmrestest" ]; then
@@ -104,8 +109,6 @@ benchmark_suite_run() {
 
 
 benchmark_prepare_bsbm() {
-  #cp /vagrant/hive-site.xml /scratch/local/aloja-bench_3/hive_conf/
-  #mkdir /vagrant/test
   local bench_name="${FUNCNAME[0]##*benchmark_}_$exec_engine$bsbm_products"
   logger "INFO: Preparing $bench_name"
 
@@ -135,7 +138,7 @@ benchmark_prepare_bsbm() {
   if [ $exec_engine == "spark" ]; then
 		# For Spark
 		logger "INFO: Executing with spark"		
-		execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/$SPARK_VERSION/sbin; $(get_spark_exports) ./start-thriftserver.sh --master $spark_master --driver-memory $driver_memory &"
+		execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/$SPARK_VERSION/sbin; $(get_spark_exports) ./start-thriftserver.sh --master $spark_master &"
 	else
 		# For Hive
 		#execute_cmd_master "$bench_name" "$(get_hive_exports) $HIVE_HOME/bin/hive --service hiveserver2 &&"
@@ -172,18 +175,20 @@ benchmark_bsbm() {
 
   # edit the config file for increasing the memory. Passing this argument as command line modifier to jdbc4rdf will not work (only the first parameter until ; will be used)
   ## two >s means append line
-  echo "executor.urisuffix=?mapreduce.map.memory.mb=8000;mapreduce.map.java.opts=-Xmx8000m;mapreduce.reduce.memory.mb=8000;mapreduce.reduce.java.opts=-Xmx8000m" >> $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_vagrant.properties
+  #echo "executor.urisuffix=?mapreduce.map.memory.mb=8000;mapreduce.map.java.opts=-Xmx7500m;mapreduce.reduce.memory.mb=8000;mapreduce.reduce.java.opts=-Xmx7500m" >> $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_vagrant.properties
 
   # default hive credentials: user=s2rdf, password= 
 	# For using spark db.driver=spark has to be changed!
   execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_vagrant.properties executor.queryfile=$(get_local_apps_path)/s2rdf/queries.txt db.driver=$exec_engine db.auth.user=s2rdf" "time"
   #execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_vagrant.properties executor.queryfile=$(get_local_apps_path)/restest.txt db.driver=$exec_engine db.auth.user=s2rdf" "time"
 
-  logger "INFO: DONE executing $BENCH_SUITE"
+  
 
   logger "DEBUG: Creating backups at scratch/local"
   cp -R /scratch/attached/1/aloja-bench_3 /scratch/local/backup_s2rdf1
   cp -R /scratch/local/aloja-bench_3 /scratch/local/backup_s2rdf2
+
+  logger "INFO: DONE executing $BENCH_SUITE"
 }
 
 benchmark_suite_save() {
