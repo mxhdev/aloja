@@ -11,10 +11,10 @@ generate_bsbm() {
   show_hdfs_diskspace
 
   # Creating data with bsbm tool
-  execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/s2rdf/bsbmtools-0.2.1; export PATH=$PATH:$(get_java_home)/bin; java -cp bin:lib/* benchmark.generator.Generator -s nt -pc $bsbm_products -fn data"
+  execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/s2rdf/bsbmtools-0.2.1; export PATH=$PATH:$(get_java_home)/bin; java -cp bin:lib/* benchmark.generator.Generator -s tsv -sp 20 -pc $bsbm_products -fn data"
 
 	# Transform data in tab seperated values, shorten predicates to 20 characters
-  execute_cmd_master "$bench_name" "python $(get_local_apps_path)/s2rdf/s2rdfconverter.py -fp $(get_local_apps_path)/s2rdf/bsbmtools-0.2.1/data.nt"
+  #execute_cmd_master "$bench_name" "python $(get_local_apps_path)/s2rdf/s2rdfconverter.py -fp $(get_local_apps_path)/s2rdf/bsbmtools-0.2.1/data.nt"
 
 	# Put data file in hdfs
 	execute_hadoop_new "$bench_name" "fs -mkdir -p /tmp/hive/s2rdf"
