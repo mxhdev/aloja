@@ -37,8 +37,8 @@
 
 
 # Scale factor
-bsbm_products=20
-scale_ub=0.5
+bsbm_products=500000
+scale_ub=1
 exec_engine=hive
 
 

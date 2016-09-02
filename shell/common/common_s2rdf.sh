@@ -63,6 +63,8 @@ generate_bsbm() {
 
 translate_bsbm() {
   logger "INFO: Generating BSBM Queries..."
+  # make sure no old queries are still in the directory
+  execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/s2rdf/sparql; rm -r *"
 
   # generate sparql queries with bsbm testdriver (no warm up runs, 1 querymix)
   execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/s2rdf/bsbmtools-0.2.1; export PATH=$PATH:$(get_java_home)/bin; java -cp bin:lib/* benchmark.testdriver.TestDriver -runs 1 -w 0 fp=$(get_local_apps_path)/s2rdf/sparql"
