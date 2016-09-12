@@ -37,8 +37,8 @@
 
 
 # Scale factor
-bsbm_products=500000
-scale_ub=1
+bsbm_products=10000
+scale_ub=0.75
 exec_engine=hive
 
 
@@ -71,17 +71,17 @@ sudo rm -r $(get_local_apps_path)/s2rdf
 
 # load data and queries
 if [ $bsbm_products == "bsbmrestest" ]; then
-  BENCH_REQUIRED_FILES["S2RDF"]="http://szene-limburg.de/s2rdf/s2rdf_bsbmrestest.tar.gz"
+  BENCH_REQUIRED_FILES["S2RDF"]="https://github.com/mxhdev/S2RDF_BSBM/raw/master/ScriptTars/s2rdf_bsbmrestest.tar.gz"
 elif [ $bsbm_products == "triples" ]; then
-  BENCH_REQUIRED_FILES["S2RDF"]="http://szene-limburg.de/s2rdf/s2rdf_triples.tar.gz"
+  BENCH_REQUIRED_FILES["S2RDF"]="https://github.com/mxhdev/S2RDF_BSBM/raw/master/ScriptTars/s2rdf_triples.tar.gz"
 elif [ $bsbm_products = 1000 ]; then
-  BENCH_REQUIRED_FILES["S2RDF"]="http://szene-limburg.de/s2rdf/data1k.tar.gz"
+  BENCH_REQUIRED_FILES["S2RDF"]="https://github.com/mxhdev/S2RDF_BSBM/raw/master/ScriptTars/s2rdf_data1k.tar.gz"
 else
-  BENCH_REQUIRED_FILES["S2RDF"]="http://szene-limburg.de/s2rdf/s2rdf_DataGenerator.tar.gz"
+  BENCH_REQUIRED_FILES["S2RDF"]="https://github.com/mxhdev/S2RDF_BSBM/raw/master/ScriptTars/s2rdf_DataGenerator.tar.gz"
   generate_data=1
 fi
 
-BENCH_REQUIRED_FILES["JDBC4RDF"]="http://szene-limburg.de/s2rdf/jdbc4rdf.tar.gz"
+BENCH_REQUIRED_FILES["JDBC4RDF"]="https://github.com/mxhdev/S2RDF_BSBM/raw/master/ScriptTars/jdbc4rdf.tar.gz"
 
 
 # Iterate the specified benchmarks in the suite
@@ -132,10 +132,10 @@ benchmark_prepare_bsbm() {
   # run hive import script
   execute_hive "$bench_name" "-hiveconf prepath='' -f $(get_local_apps_path)/s2rdf/loadScript.hql" "time"
 
-  logger "INFO: Starting HiveServer2"
+  logger "INFO: Starting HiveServer2"  
   if [ $exec_engine == "spark" ]; then
 	# For Spark
-	logger "INFO: Executing with spark"		
+	logger "INFO: Executing"		
 	execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/$SPARK_VERSION/sbin; $(get_spark_exports) ./start-thriftserver.sh --master $spark_master --conf spark.kryoserializer.buffer.max=1024 &"
   else
 	# For Hive
@@ -172,7 +172,13 @@ benchmark_bsbm() {
   local bench_name="${FUNCNAME[0]##*benchmark_}_$exec_engine$bsbm_products"
 
   # default hive credentials: user=s2rdf, password= 
-	# For using spark db.driver=spark has to be changed!
+  # For using spark db.driver=spark has to be changed!
+  
+  # Use this for using the vp tables only!
+  execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_azureA7.properties executor.queryfile=$(get_local_apps_path)/s2rdf/sql/VPcompositeQueryFile.txt db.driver=$exec_engine" "time"
+
+  execute_cmd_master "$bench_name" "cp results.csv results_vp.csv" "time"
+  
   execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_azureA7.properties executor.queryfile=$(get_local_apps_path)/s2rdf/queries.txt db.driver=$exec_engine" "time"
   
 

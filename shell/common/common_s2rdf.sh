@@ -72,6 +72,7 @@ translate_bsbm() {
   logger "INFO: Translating SPARQL Queries..."
   # translate queries with s2rdf translator
   execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/s2rdf; export PATH=$PATH:$(get_java_home)/bin; python translateBSBM.py -s sparql/ -t sql/ -u $scale_ub"
+  #execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/s2rdf; export PATH=$PATH:$(get_java_home)/bin; python translateBSBM.py -s $(get_local_apps_path)/testQueries/ -t sql/ -u $scale_ub"
 
   # Copy new query file to main folder
   execute_cmd_master "$bench_name" "cd $(get_local_apps_path)/s2rdf; cp -f sql/compositeQueryFile.txt ./queries.txt"
