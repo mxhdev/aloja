@@ -175,9 +175,10 @@ benchmark_bsbm() {
   # For using spark db.driver=spark has to be changed!
   
   # Use this for using the vp tables only!
-  execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_azureA7.properties executor.queryfile=$(get_local_apps_path)/s2rdf/sql/VPcompositeQueryFile.txt db.driver=$exec_engine" "time"
-
-  execute_cmd_master "$bench_name" "cp results.csv results_vp.csv" "time"
+  #execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_azureA7.properties executor.queryfile=$(get_local_apps_path)/s2rdf/sql/VPcompositeQueryFile.txt db.driver=$exec_engine" "time"
+  
+  # Save execution time of vp queries
+  #execute_cmd_master "$bench_name" "cp results.csv results_vp.csv" "time"
   
   execute_cmd_master "$bench_name" "$(get_java_home)/bin/java -jar $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_0.4.jar exec $(get_local_apps_path)/s2rdf/jdbc4rdf/jdbc4rdf_azureA7.properties executor.queryfile=$(get_local_apps_path)/s2rdf/queries.txt db.driver=$exec_engine" "time"
   
